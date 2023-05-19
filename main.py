@@ -1,107 +1,121 @@
 """
-Zhaohua Zhang APCSP 132
-AI App Project
-This app incorperates GPT-3 running the Davinci 002 engine. When the
-user runs the code, a gui will pop up, prompting for the sure to enter
-two birthdates and a button to check the compatibility based off their 
-star signs. The GPT-3 engine will generate a paragraph explaining their 
-star signs and give a verdict on whether they are compatable or not.
+Group Members: Zhaohua Zhang, Danisha Panigrahi, Ishita Chaurasia
+Period 1 Millard
+
+AI App - Tutoring App Using AI
+The code uses python that creates a gui using tkinter for an AI tutoring app. 
+The app allows users to select a grade level and enter a subject. 
+It then uses the GPT-3 API to generate problems based on the selected grade and subject. 
+The generated problems are displayed in the app's interface from the chatbot.
 
 """
 
-
 import tkinter as tk
 import openai
-import time
 
-openai.api_key = "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"
+# OpenAI GPT-3 API credentials
+OPENAI_API_KEY = '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'
 
-# Rate limiting variables
-MAX_REQUESTS_PER_MINUTE = 60
-REQUESTS_INTERVAL = 60 / MAX_REQUESTS_PER_MINUTE
-last_request_time = 0
+# Initialize the OpenAI API
+openai.api_key = OPENAI_API_KEY
 
-def generate_text(prompt):
-    global last_request_time
+# Dictionary of grade levels and subjects
+grades = {
+    'Kindergarten': ['Math', 'English'],
+    '1st Grade': ['Math', 'English', 'Science'],
+    '2nd Grade': ['Math', 'English', 'Science'],
+    '3rd Grade': ['Math', 'English', 'Science'],
+    '4th Grade': ['Math', 'English', 'Science'],
+    '5th Grade': ['Math', 'English', 'Science'],
+    '6th Grade': ['Math', 'English', 'Science'],
+    '7th Grade': ['Math', 'English', 'Science'],
+    '8th Grade': ['Math', 'English', 'Science'],
+    '9th Grade': ['Math', 'English', 'Science'],
+    '10th Grade': ['Math', 'English', 'Science'],
+    '11th Grade': ['Math', 'English', 'Science'],
+    '12th Grade': ['Math', 'English', 'Science']
+}
 
-    # Check time since last request and sleep if needed to stay within rate limits
-    current_time = time.time()
-    time_since_last_request = current_time - last_request_time
-    if time_since_last_request < REQUESTS_INTERVAL:
-        time.sleep(REQUESTS_INTERVAL - time_since_last_request)
+# Create the Tkinter GUI application
+class TutorApp:
+    def __init__(self, root, title):
+        self.root = root
+        self.root.title(title)
 
-    completions = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=1024,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
+        # Grade Level Label
+        self.grade_label = tk.Label(self.root, text='Select Grade Level:')
+        self.grade_label.pack()
 
-    # Update last request time
-    last_request_time = time.time()
+        # Grade Level Dropdown
+        self.grade_var = tk.StringVar()
+        self.grade_dropdown = tk.OptionMenu(self.root, self.grade_var, *grades.keys())
+        self.grade_dropdown.pack()
 
-    message = completions.choices[0].text
-    return message.strip()
+        # Subject Label
+        self.subject_label = tk.Label(self.root, text='Enter Subject:')
+        self.subject_label.pack()
 
-def generate_text(prompt):
-    completions = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=5000,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
+        # Subject Entry Field
+        self.subject_entry = tk.Entry(self.root)
+        self.subject_entry.pack()
 
-    message = completions.choices[0].text
-    return message.strip()
+        # Get Problem Button
+        self.problem_button = tk.Button(self.root, text='Get Problem', command=self.get_problem)
+        self.problem_button.pack()
 
-def get_star_sign(day, month):
-    # Function to determine the star sign based on the given day and month
-    # (Same as before)
-    pass
+        # Feedback Label
+        self.feedback_label = tk.Label(self.root, text='Feedback:')
+        self.feedback_label.pack()
 
-def check_compatibility():
-    dob1 = entry_dob1.get().strip()
-    month1, day1, year1 = map(int, dob1.split("-"))
-    star_sign1 = get_star_sign(day1, month1)
+        # Feedback Text Display
+        self.feedback_text = tk.Text(self.root, height=10, width=50)
+        self.feedback_text.pack()
 
-    dob2 = entry_dob2.get().strip()
-    month2, day2, year2 = map(int, dob2.split("-"))
-    star_sign2 = get_star_sign(day2, month2)
+    def get_problem(self):
+        # Get selected grade level and subject
+        grade_level = self.grade_var.get()
+        subject = self.subject_entry.get()
 
-    prompt = f"What is the compatibility of {star_sign1} and {star_sign2}?"
-    compatibility = generate_text(prompt)
+        if grade_level and subject:
+            # Construct prompt using grade level and subject
+            prompt = f"Grade Level: {grade_level}\nSubject: {subject}\n"
 
-    result_text.configure(text=f"Compatibility: {compatibility}")
+            # Generate problem using the OpenAI GPT-3 API
+            response = openai.Completion.create(
+                engine='text-davinci-003',
+                prompt=prompt,
+                max_tokens=100,
+                n=1,
+                stop=None,
+                temperature=0.7
+            )
+            problem = response.choices[0].text.strip()
 
-# Create the main window
-window = tk.Tk()
-window.title("Star Sign Compatibility Checker")
+            # Display the generated problem in the feedback section
+            self.feedback_text.delete(1.0, tk.END)
+            self.feedback_text.insert(tk.END, problem)
+        else:
+            # Display error message if grade level or subject is missing
+            self.feedback_text.delete(1.0, tk.END)
+            self.feedback_text.insert(tk.END, 'Please select grade level and enter a subject.')
 
-# Create and position the labels
-label_dob1 = tk.Label(window, text="Person 1 Date of Birth (mm-dd-yyyy):")
-label_dob1.grid(row=0, column=0, padx=10, pady=10)
+# Create the root window
+root = tk.Tk()
 
-label_dob2 = tk.Label(window, text="Person 2 Date of Birth (mm-dd-yyyy):")
-label_dob2.grid(row=1, column=0, padx=10, pady=10)
+# Set the title of the GUI
+title = "AI Tutoring App"
 
-# Create and position the entry fields
-entry_dob1 = tk.Entry(window)
-entry_dob1.grid(row=0, column=1, padx=10, pady=10)
+# Set the window size
+window_width = 400
+window_height = 300
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+x_coordinate = int((screen_width / 2) - (window_width / 2))
+y_coordinate = int((screen_height / 2) - (window_height / 2))
+root.geometry("{}x{}+{}+{}".format(window_width, window_height, x_coordinate, y_coordinate))
 
-entry_dob2 = tk.Entry(window)
-entry_dob2.grid(row=1, column=1, padx=10, pady=10)
+# Create an instance of the TutorApp
+tutor_app = TutorApp(root, title)
 
-# Create and position the button
-btn_check = tk.Button(window, text="Check Compatibility", command=check_compatibility)
-btn_check.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
-
-# Create and position the result label
-result_text = tk.Label(window, text="Compatibility: ")
-result_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
-
-# Run the main event loop
-window.mainloop()
+# Start the Tkinter event loop
+root.mainloop()
